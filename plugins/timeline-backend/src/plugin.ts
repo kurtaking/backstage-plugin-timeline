@@ -3,7 +3,7 @@ import {
   createBackendPlugin,
 } from '@backstage/backend-plugin-api';
 import { createRouter } from './router';
-import { todoListServiceRef } from './services/TodoListService';
+import { timelineServiceRef } from './services';
 
 /**
  * timelinePlugin backend plugin
@@ -17,13 +17,13 @@ export const timelinePlugin = createBackendPlugin({
       deps: {
         httpAuth: coreServices.httpAuth,
         httpRouter: coreServices.httpRouter,
-        todoList: todoListServiceRef,
+        timelineService: timelineServiceRef,
       },
-      async init({ httpAuth, httpRouter, todoList }) {
+      async init({ httpAuth, httpRouter, timelineService }) {
         httpRouter.use(
           await createRouter({
             httpAuth,
-            todoList,
+            timelineService,
           }),
         );
       },
