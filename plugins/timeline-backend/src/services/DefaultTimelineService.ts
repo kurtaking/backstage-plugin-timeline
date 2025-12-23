@@ -1,26 +1,34 @@
 import { LoggerService } from '@backstage/backend-plugin-api';
 import { TimelineItem, TimelineService } from './TimelineService';
+import { TimelineDataProvider } from '../extensions';
 
 export class DefaultTimelineService implements TimelineService {
   readonly #logger: LoggerService;
+  readonly #dataProviders: TimelineDataProvider[];
 
-  static create(options: { logger: LoggerService }) {
-    return new DefaultTimelineService(options.logger);
+  static create(opts: { logger: LoggerService, dataProviders: TimelineDataProvider[] }) {
+    return new DefaultTimelineService(opts.logger, opts.dataProviders);
   }
 
-  private constructor(logger: LoggerService) {
+  private constructor (logger: LoggerService, dataProviders: TimelineDataProvider[]) {
     this.#logger = logger;
+    this.#dataProviders = dataProviders;
   }
 
-  async listTimelineItems(): Promise<{ items: TimelineItem[] }> {
-    this.#logger.info('Placeholder service method called');
-    return {
-      items: [
-        {
-          id: '1',
-          title: 'Hello, world!',
-        },
-      ],
-    };
+  async timeline(): Promise<{ items: TimelineItem[] }> {
+    const results = await Promise.allSettled(
+      this.#dataProviders.map(provider => provider.getItems({}))
+    );
+
+    const items: TimelineItem[] = [];
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        items.push(...result.value);
+      } else {
+        this.#logger.error('Provider failed', { error: result.reason });
+      }
+    }
+
+    return { items };
   }
 }

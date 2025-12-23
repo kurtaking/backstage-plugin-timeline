@@ -24,7 +24,7 @@ export async function createRouter({
       return;
     }
 
-    const { items } = await timelineService.listTimelineItems();
+    const { items } = await timelineService.timeline();
 
     res.status(200).json({
       timeline: items,

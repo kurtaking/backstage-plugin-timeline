@@ -4,5 +4,5 @@ export interface TimelineItem {
 }
 
 export interface TimelineService {
-  listTimelineItems(): Promise<{ items: TimelineItem[] }>;
+  timeline(): Promise<{ items: TimelineItem[] }>;
 }

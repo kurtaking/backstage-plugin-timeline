@@ -3,7 +3,8 @@ import {
   createBackendPlugin,
 } from '@backstage/backend-plugin-api';
 import { createRouter } from './router';
-import { timelineServiceRef } from './services';
+import { TimelineDataProvider, timelineExtensionPoint } from './extensions';
+import { DefaultTimelineService } from './services/DefaultTimelineService';
 
 /**
  * timelinePlugin backend plugin
@@ -13,13 +14,25 @@ import { timelineServiceRef } from './services';
 export const timelinePlugin = createBackendPlugin({
   pluginId: 'timeline',
   register(env) {
+    const dataProviders = new Array<TimelineDataProvider>();
+    env.registerExtensionPoint(timelineExtensionPoint, {
+      addDataProvider(provider) {
+        dataProviders.push(provider);
+      },
+    });
+
     env.registerInit({
       deps: {
         httpAuth: coreServices.httpAuth,
         httpRouter: coreServices.httpRouter,
-        timelineService: timelineServiceRef,
+        logger: coreServices.logger,
       },
-      async init({ httpAuth, httpRouter, timelineService }) {
+      async init({ httpAuth, httpRouter, logger }) {
+        const timelineService = DefaultTimelineService.create({
+          logger,
+          dataProviders,
+        });
+
         httpRouter.use(
           await createRouter({
             httpAuth,
